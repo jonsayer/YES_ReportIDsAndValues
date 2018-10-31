@@ -1,0 +1,88 @@
+@isTest
+public class YES_TEST_ReportIDsAndValues {
+	@testSetup static void setUpTestRecords() {
+        Account acctA = new Account(
+        	Name = 'Test Account A'
+        );
+        insert acctA;
+        
+        Account acctB = new Account(
+        	Name = 'Test Account B'
+        );
+        insert acctB;
+        
+        List<Contact> conList = new List<Contact>();
+        for(Integer i = 0; i<10; i++){
+            Contact con = new Contact(
+                FirstName 	= 'F' + String.valueOf(i) + 'rst',
+                LastName  	= 'C' + String.valueOf(i) + 'ntact',
+                Email		= String.valueOf(i)+'Contact@salesforce.com'
+            );
+            if(math.mod(i, 2) == 0){
+                con.AccountId = acctA.Id;
+            } else {
+                con.AccountId = acctB.Id;
+            }
+            conList.add(con);
+        }
+        
+        // Add a duplicate record
+        Contact duplicate = new Contact(
+        	FirstName = 'F2rst',
+            LastName  = 'C2ntact',
+            Email	  = '2Contact@salesforce.com',
+            AccountId = AcctB.Id
+        );
+        conList.add(duplicate);
+        
+        // Add a record that won't be in our output file
+        Contact anotherCon = new Contact(
+        	FirstName = 'Jimmy',
+            LastName  = 'Crackcorn',
+            Email	  = 'corncracker@gmail.com',
+            AccountId = AcctA.Id
+        );
+        conList.add(anotherCon);
+        insert conList;
+    }
+    
+    @isTest static void testTheThing() {
+    	String csv = 'Email\n';
+        for(Integer i = 0; i<10; i++){
+        	csv = csv + String.valueOf(i)+'Contact@salesforce.com\n';
+        }
+        csv = csv + 'jsayer622@gmail.com';
+        
+        Blob csvBlob = Blob.valueof(csv);
+        
+        String[] fieldsInOutput = new List<String>{'FirstName','LastName'};
+        
+            
+        Test.startTest();
+        
+        YES_CTRL_ReportIDsAndValues controller = new YES_CTRL_ReportIDsAndValues();
+        
+        controller.selectedObject 	= 'Contact';
+        
+        controller.fetchFields();
+        controller.selectedField 	= 'Email';
+        controller.fieldsInOutput 	= fieldsInOutput;
+        controller.selectedField();
+		
+        controller.csvFileBody 		= csvBlob;
+        controller.readcsvFile();
+        
+        // Make sure we found our contacts
+        System.assertEquals( controller.csvBeforeConvert.contains( 'F1rst' ) , 		TRUE 	, controller.csvBeforeConvert);
+        System.assertEquals( controller.csvBeforeConvert.contains( 'C0ntact' ) , 	TRUE 	, controller.csvBeforeConvert);
+        
+        // Jimmy Crackcorn was not in our search file, so he shouldn't be in our output
+        System.assertEquals( controller.csvBeforeConvert.contains( 'Crackcorn' ) , 	False 	, controller.csvBeforeConvert);
+        
+        //This contact should be in the csv twice
+        System.assertEquals( controller.csvBeforeConvert.countMatches( 'F2rst' ) , 	2 	, controller.csvBeforeConvert);
+        
+        
+        test.stopTest();
+    }
+}
