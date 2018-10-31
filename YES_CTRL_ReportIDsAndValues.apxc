@@ -9,22 +9,22 @@
 // 
 //
 public class YES_CTRL_ReportIDsAndValues {
-	public Blob csvFileBody					{get;set;}
+	public Blob csvFileBody				{get;set;}
     Public string csvAsString				{get;set;}
     Public String[] csvfilelines			{get;set;}
-    Public string soqlQuery					{get;set;}
+    Public string soqlQuery				{get;set;}
     Public string csvBeforeConvert			{get;set;}
     
     Public List<string> fieldList			{get;set;}
     Public Integer searchTokenIndex			{get;set;}
     
-    Public List<String> searchValues		{get;set;}
+    Public List<String> searchValues			{get;set;}
     
     Public List<Sobject> opps				{get;set;}
-    Public String csv 						{get;set;}
+    Public String csv 					{get;set;}
     
-    public List<SelectOption> listOfObjects	{get;set;}
-    public List<SelectOption> listOfFields	{get;set;}
+    public List<SelectOption> listOfObjects		{get;set;}
+    public List<SelectOption> listOfFields		{get;set;}
     public String selectedObject			{get;set;}
     public String selectedField				{get;set;}
     public String[] fieldsInOutput			{get;set;}
@@ -177,6 +177,4 @@ public class YES_CTRL_ReportIDsAndValues {
         }
     	return sortingList;
     }
-    
-    
 }
