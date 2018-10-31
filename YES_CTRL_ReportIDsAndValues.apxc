@@ -1,0 +1,182 @@
+// Created October-November 2018 by Jon Sayer of YES! Media. 
+// Offered to the nonprofit Salesforce community as open source software. Please make it better.
+// 
+// I have blatantly ripped off some code from these fine sources:
+// Importing & reading a CSV: 			https://sfdcsrini.blogspot.com/2014/09/data-import-from-csv-using-visualforce.html
+// Generating list of object fields: 	https://developer.salesforce.com/forums/?id=9060G0000005UGKQA2
+// Sorting a Select list by value: 		https://success.salesforce.com/apex/ideaView?id=08730000000BrX6AAK
+// 
+// 
+//
+public class YES_CTRL_ReportIDsAndValues {
+	public Blob csvFileBody					{get;set;}
+    Public string csvAsString				{get;set;}
+    Public String[] csvfilelines			{get;set;}
+    Public string soqlQuery					{get;set;}
+    Public string csvBeforeConvert			{get;set;}
+    
+    Public List<string> fieldList			{get;set;}
+    Public Integer searchTokenIndex			{get;set;}
+    
+    Public List<String> searchValues		{get;set;}
+    
+    Public List<Sobject> opps				{get;set;}
+    Public String csv 						{get;set;}
+    
+    public List<SelectOption> listOfObjects	{get;set;}
+    public List<SelectOption> listOfFields	{get;set;}
+    public String selectedObject			{get;set;}
+    public String selectedField				{get;set;}
+    public String[] fieldsInOutput			{get;set;}
+    
+    public Map<String, Schema.SobjectType> gd = schema.getGlobalDescribe();
+    public Map<String, schema.SObjectField> MapOfFields;
+    
+    
+    public YES_CTRL_ReportIDsAndValues(){
+        csvfilelines = new String[]{};
+        fieldList = New List<string>();
+        searchValues = New List<String>();
+        csv = '';
+        
+        
+        listOfObjects = new List<SelectOption>();
+        for(Schema.SObjectType obj : gd.values()){
+            Schema.DescribeSObjectResult dr = obj.getDescribe();
+            listOfObjects.add(new SelectOption(String.valueOf(dr.getName()), String.valueOf(dr.getLabel())));
+        } 
+        listOfObjects = sortSelectOptionsByLabel(listOfObjects);
+  	}
+    
+    Public void readcsvFile(){
+        csv='';
+        if(searchTokenIndex == null){
+            searchTokenIndex = 0;
+        }
+        // Split to csv into rows
+        csvAsString 	= csvFileBody.toString();
+        csvfilelines 	= csvAsString.split('\n');
+        //get header row
+        for(string st:csvfilelines[0].split(',')){
+        	fieldList.add(st);
+        }
+        // get our search tokens
+        for(Integer i=1;i<csvFileLines.size();i++){
+            string[] csvRecordData = csvfilelines[i].split(',');
+            searchValues.add(csvRecordData[searchTokenIndex] );
+        }
+        // generate the list of fields to search by and the soql query
+        String outputFieldsCombined = '';
+        if (fieldsInOutput.size() > 0){
+            if(fieldsInOutput.size() == 1){
+                outputFieldsCombined = ' , ' + fieldsInOutput[0];
+            } else {
+                outputFieldsCombined = ' , ' + String.join( fieldsInOutput, ' , ' );
+            }
+        } else {
+            outputFieldsCombined = ' ';
+        }
+        
+        //generate soql for display on vf page
+        soqlQuery = 'SELECT	id,'+ selectedField + ' ' + outputFieldsCombined + ' FROM ' + selectedObject + ' WHERE ' + selectedField + ' in :searchValues ORDER BY ' + selectedField;
+        
+        // actual query
+        opps = Database.query( 'SELECT	id,'+ selectedField + ' ' + outputFieldsCombined + ' FROM ' + selectedObject + ' WHERE ' + selectedField + ' in :searchValues ORDER BY ' + selectedField );
+		
+        //populate first row of our csv with original fields
+        for (Integer i=0;i<fieldList.size();i++){
+        	csv = csv + fieldList[i].normalizeSpace().escapeCsv() + ',';
+        }
+        
+        //add sf id field
+        csv = csv + 'ID'.escapeCsv();
+        
+        //add columns for our output fields
+        for (Integer i=0;i<fieldsInOutput.size();i++){
+            csv = csv + ',' + fieldsInOutput[i].escapeCsv();
+        }
+        csv = csv + '\n';
+        
+        //output each row by looping through the input rows
+        for (Integer i=1;i<csvFileLines.size();i++){
+            Boolean matchFound = false;
+            string[] csvRecordData = csvfilelines[i].split(',');
+            //loop through each returned SObject and look for a match
+            for(Sobject opp : opps){
+                if(String.valueOf( csvRecordData[searchTokenIndex] ) == String.valueOf( opp.get( selectedField ) ) ){
+                    // match found, so we will output a row
+                    matchFound = true;
+                    //output columns from original file
+                    for(Integer j = 0; j < csvRecordData.size(); j++){
+                        csv = csv + csvRecordData[j].normalizeSpace().escapeCsv() + ',';
+                    }
+                    //output id
+                    csv = csv + String.valueOf(opp.Id).escapeCsv();
+                    // if we have additional output fields, add them too
+                    if (fieldsInOutput.size() > 0){
+                        for(Integer k = 0; k < fieldsInOutput.size(); k++){
+                            // if the field is blank, skip it or we will get errors
+                            try{
+                                if(opp.get( fieldsInOutput[k] ) != null && opp.get( fieldsInOutput[k] ) != '' ){
+                                    csv = csv + ',' + String.valueOf( opp.get( fieldsInOutput[k] ) ).escapeCsv();
+                                } else {
+                                    csv = csv + ',';
+                                }
+                            } catch (Exception e) {
+                                csv = csv + ',';
+            					ApexPages.addMessage( new ApexPages.Message(ApexPages.Severity.ERROR,'Invalid field: '+selectedObject+'.'+fieldsInOutput[k] +' || ' + e.getmessage() ) );
+                            }
+                        }
+                    }
+                    // new row. **this will always return multiple matches
+                    csv = csv + '\n';
+                }
+            }
+            // if we didn't find a match for this record, then just output the original row
+            if(matchFound == false){
+                for(Integer j = 0; j < csvRecordData.size(); j++){
+                    csv = csv + csvRecordData[j].normalizeSpace().escapeCsv() + ',';
+                }
+                if (fieldsInOutput.size() > 0){
+                    for(Integer k = 0; k < fieldsInOutput.size(); k++){
+                        csv = csv + ',';
+                    }
+                }
+                csv = csv + '\n';
+            }
+        }
+        //encode for output
+        csvBeforeConvert = csv;
+        csv = EncodingUtil.base64Encode(Blob.valueOf(csv));
+    }
+    
+    
+    public void fetchFields(){
+        listOfFields = new List<SelectOption>();
+        MapOfFields = gd.get(selectedObject).getDescribe().fields.getMap();
+        for(Schema.SObjectField field : MapOfFields.values()){
+            Schema.DescribeFieldResult fr = field.getDescribe();
+            listOfFields.add( new SelectOption(String.valueof(fr.getName()), String.valueof(fr.getLabel())));
+        } 
+        listOfFields = sortSelectOptionsByLabel(listOfFields);
+    }
+    
+    public void selectedField(){
+        system.debug(selectedField);
+    }
+    
+    public List<SelectOption> sortSelectOptionsByLabel(List<SelectOption> sortingList) {
+        for (Integer i =0; i < sortingList.size(); i++) {
+            for (Integer j = i; j > 0; j--) {
+                if (sortingList[j-1].getLabel() > sortingList[j].getLabel()){
+                    SelectOption temp = sortingList[j];
+                    sortingList[j] = sortingList[j-1];
+                    sortingList[j-1] = temp;
+                }
+            }
+        }
+    	return sortingList;
+    }
+    
+    
+}
