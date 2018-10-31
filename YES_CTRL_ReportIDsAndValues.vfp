@@ -1,0 +1,91 @@
+<apex:page controller="YES_CTRL_ReportIDsAndValues" docType="html-5.0" >
+    <apex:pageMessages escape="false"/>
+    <apex:form > 
+        
+        
+        <apex:pageBlock title="Look Up and Export Records on Non-ID Lookup">
+            <p>
+                This is a simple tool allowing you to look up the SF ID and other fields of records based on another semi-unique field. 
+            </p>
+            <apex:actionregion >
+                <apex:actionFunction name="CallFieldMethod" action="{!fetchFields}" reRender="fields" status="status" />
+        		<apex:actionFunction name="CallField" action="{!selectedField}" status="status" />
+                <apex:outputPanel id="objectlist" >
+                    Select Object: 
+                    <apex:selectList value="{!selectedObject}" size="1"  onchange="CallFieldMethod()" >
+                        <apex:selectOptions value="{!listOfObjects}"></apex:selectOptions>
+                    </apex:selectList>
+                </apex:outputPanel><br/>
+                <apex:outputPanel id="fields" >
+                    <p>
+                        Select Query Field : 
+                        <apex:selectList value="{!selectedField}" size="1" id="FieldList" rendered="{!selectedObject != null}" onchange="CallField()" >
+                            <apex:selectOptions value="{!listOfFields}"></apex:selectOptions>
+                        </apex:selectList>
+                    </p>
+                    <p>
+                        Select Additional Fields to show in Output File : 
+                        <apex:selectList value="{!fieldsInOutput}" size="20" multiselect="true" id="outputFieldList" rendered="{!selectedObject != null}" >
+                            <apex:selectOptions value="{!listOfFields}"></apex:selectOptions>
+                        </apex:selectList>
+                    </p>
+                    
+                    
+                </apex:outputPanel>
+            </apex:actionregion>
+            
+            
+            
+            <apex:pageBlockSection title="Upload file" columns="1" >
+                <apex:inputFile value="{!csvFileBody}"  filename="{!csvAsString}" title="Upload CSV File" />
+            </apex:pageBlockSection>
+            <apex:commandButton value="Run Query" action="{!readcsvFile}" status="status" />
+            <!--<apex:pageBlockSection title="Select Column"  columns="1">
+                <apex:input value="{!searchTokenIndex}" label="2: Column Index of Query Value" />
+                
+            </apex:pageBlockSection>-->
+            
+        </apex:pageBlock>
+        <apex:pageBlock id="csv" rendered="{! csv != '' }" title="Output">
+            
+            
+            <a href="data:text/plain;charset=utf-8;base64,{! csv }" download="output.csv">Click to Download Results</a>
+            
+            <p>
+                <b>SOQL Query:</b> {! soqlQuery }
+            </p>
+            
+            <p>
+                <b>Seach Values:</b><br />
+                <apex:repeat value="{! searchValues }" var="value">
+                    {!value}<br />
+                </apex:repeat>
+            </p>
+
+            <p>
+                <b>Opps:</b><br />
+                <apex:pageBlockTable value="{!opps}" var="opp">
+                	<apex:repeat value="{!fieldsInOutput}" var="FieldLable">  
+                    	<apex:column value="{!opp[FieldLable]}"/>  
+                	</apex:repeat>
+                </apex:pageBlockTable>
+            </p>
+        </apex:pageBlock>
+        
+        
+        <apex:actionStatus id="status">
+            <apex:facet name="start">
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                &nbsp;
+            </div>
+            <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                    <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                    <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                </div>
+            </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+    </apex:form>
+</apex:page>
