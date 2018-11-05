@@ -67,7 +67,6 @@ public class YES_TEST_ReportIDsAndValues {
         controller.fetchFields();
         controller.selectedField 	= 'Email';
         controller.fieldsInOutput 	= fieldsInOutput;
-        controller.selectedField();
 		
         controller.csvFileBody 		= csvBlob;
         controller.readcsvFile();
