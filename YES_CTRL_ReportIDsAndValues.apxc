@@ -9,37 +9,45 @@
 // 
 //
 public class YES_CTRL_ReportIDsAndValues {
-	public Blob csvFileBody				{get;set;}
-    Public string csvAsString				{get;set;}
-    Public String[] csvfilelines			{get;set;}
-    Public string soqlQuery				{get;set;}
-    Public string csvBeforeConvert			{get;set;}
+    // These handle the input csv
+    public Blob csvFileBody                 {get;set;}
+    public string csvAsString               {get;set;}
+    public String[] csvfilelines            {get;set;}
+    public List<String> searchValues        {get;set;}
     
-    Public List<string> fieldList			{get;set;}
-    Public Integer searchTokenIndex			{get;set;}
+    // In version 1, will default to 0, first column of csv, for search values. In the future I hope to support selecting a different column as the search values.
+    public Integer searchTokenIndex			{get;set;}
     
-    Public List<String> searchValues			{get;set;}
+    // These are for debugging and don't really play much a role
+    public string soqlQuery				{get;set;}
+    public string csvBeforeConvert			{get;set;}
     
-    Public List<Sobject> opps				{get;set;}
-    Public String csv 					{get;set;}
+    // These are the Salesforce field values that will be output to the returned csv
+    public List<string> fieldList			{get;set;}
     
-    public List<SelectOption> listOfObjects		{get;set;}
-    public List<SelectOption> listOfFields		{get;set;}
+    // This holds the records that match our search values
+    public List<Sobject> opps				{get;set;}
+    
+    // Our output csv will be encoded here.
+    public String csv					{get;set;}
+    
+    // User input of what objects and fields are being queries and returned
     public String selectedObject			{get;set;}
     public String selectedField				{get;set;}
     public String[] fieldsInOutput			{get;set;}
     
+    // These handle the dynamic display and selection of objects and fields. 
+    public List<SelectOption> listOfObjects	        {get;set;}
+    public List<SelectOption> listOfFields	        {get;set;}
     public Map<String, Schema.SobjectType> gd = schema.getGlobalDescribe();
     public Map<String, schema.SObjectField> MapOfFields;
     
-    
+    // Controller class initializing key values.
     public YES_CTRL_ReportIDsAndValues(){
         csvfilelines = new String[]{};
         fieldList = New List<string>();
         searchValues = New List<String>();
         csv = '';
-        
-        
         listOfObjects = new List<SelectOption>();
         for(Schema.SObjectType obj : gd.values()){
             Schema.DescribeSObjectResult dr = obj.getDescribe();
@@ -48,23 +56,31 @@ public class YES_CTRL_ReportIDsAndValues {
         listOfObjects = sortSelectOptionsByLabel(listOfObjects);
   	}
     
-    Public void readcsvFile(){
+    // Here's the beef! Here's where all the thinking happens. 
+    public void readcsvFile(){
+        // Clear out the input csv in case it got modified somehow.
         csv='';
+        
+        // In the future I hope to allow the user to select a column to serve as the search values. Currently, I default to 0. 
         if(searchTokenIndex == null){
             searchTokenIndex = 0;
         }
+        
         // Split to csv into rows
         csvAsString 	= csvFileBody.toString();
         csvfilelines 	= csvAsString.split('\n');
+        
         //get header row
         for(string st:csvfilelines[0].split(',')){
         	fieldList.add(st);
         }
-        // get our search tokens
+        
+        // get our search values
         for(Integer i=1;i<csvFileLines.size();i++){
             string[] csvRecordData = csvfilelines[i].split(',');
             searchValues.add(csvRecordData[searchTokenIndex] );
         }
+        
         // generate the list of fields to search by and the soql query
         String outputFieldsCombined = '';
         if (fieldsInOutput.size() > 0){
@@ -77,7 +93,7 @@ public class YES_CTRL_ReportIDsAndValues {
             outputFieldsCombined = ' ';
         }
         
-        //generate soql for display on vf page
+        //generate soql for debugging. This line isn't really used from here on out
         soqlQuery = 'SELECT	id,'+ selectedField + ' ' + outputFieldsCombined + ' FROM ' + selectedObject + ' WHERE ' + selectedField + ' in :searchValues ORDER BY ' + selectedField;
         
         // actual query
@@ -99,18 +115,24 @@ public class YES_CTRL_ReportIDsAndValues {
         
         //output each row by looping through the input rows
         for (Integer i=1;i<csvFileLines.size();i++){
+            
+            Integer oppIndex = -1;
+            List<Integer> oppsToDrop = new List<Integer>();
             Boolean matchFound = false;
-            string[] csvRecordData = csvfilelines[i].split(',');
+            
+            String[] csvRecordData = csvfilelines[i].split(',');
+            
             //loop through each returned SObject and look for a match
             for(Sobject opp : opps){
+                oppIndex++;
                 if(String.valueOf( csvRecordData[searchTokenIndex] ) == String.valueOf( opp.get( selectedField ) ) ){
+                    // remember the index of this opp row so we can delete it later. We won't be needing it. 
+                    oppsToDrop.add(oppIndex);
                     // match found, so we will output a row
                     matchFound = true;
-                    //output columns from original file
-                    for(Integer j = 0; j < csvRecordData.size(); j++){
-                        csv = csv + csvRecordData[j].normalizeSpace().escapeCsv() + ',';
-                    }
-                    //output id
+                    //output columns from original file, removing line breaks
+                    csv = csv + csvfilelines[i].replaceAll('\\n','').replaceAll('\\r','') + ',';
+                    //output Salesforce record id
                     csv = csv + String.valueOf(opp.Id).escapeCsv();
                     // if we have additional output fields, add them too
                     if (fieldsInOutput.size() > 0){
@@ -130,27 +152,35 @@ public class YES_CTRL_ReportIDsAndValues {
                     }
                     // new row. **this will always return multiple matches
                     csv = csv + '\n';
+                } else if (matchFound == true){
+                    //We have already found a match, and this is the next row after that that doesn't match. 
+                    //Since we know this set is sorted by the query field, we can break here 
+                    //because everything after this won't match
+                    break;
                 }
             }
             // if we didn't find a match for this record, then just output the original row
             if(matchFound == false){
-                for(Integer j = 0; j < csvRecordData.size(); j++){
-                    csv = csv + csvRecordData[j].normalizeSpace().escapeCsv() + ',';
-                }
+                csv = csv + csvfilelines[i].replaceAll('\\n','').replaceAll('\\r','') + ',';
                 if (fieldsInOutput.size() > 0){
                     for(Integer k = 0; k < fieldsInOutput.size(); k++){
                         csv = csv + ',';
                     }
                 }
                 csv = csv + '\n';
+            } 
+            // Loop through oppsToDrop and remove those so we don't review those records again. This saves on CPU time. 
+            for(Integer l = oppsToDrop.size() - 1; l > -1 ; l--){
+                opps.remove(oppsToDrop[l]);
             }
         }
-        //encode for output
+        // Save a copy of the plaintext csv string for test classes or what have you
         csvBeforeConvert = csv;
+        // encode CSV for output
         csv = EncodingUtil.base64Encode(Blob.valueOf(csv));
     }
     
-    
+    // After the user selects an object, this method pulls in the list of fields. 
     public void fetchFields(){
         listOfFields = new List<SelectOption>();
         MapOfFields = gd.get(selectedObject).getDescribe().fields.getMap();
@@ -161,10 +191,7 @@ public class YES_CTRL_ReportIDsAndValues {
         listOfFields = sortSelectOptionsByLabel(listOfFields);
     }
     
-    public void selectedField(){
-        system.debug(selectedField);
-    }
-    
+    // This method is included to sort the <select> lists of objects and field names, which come sorted in a non-intuitive way that can be hard to navigate.
     public List<SelectOption> sortSelectOptionsByLabel(List<SelectOption> sortingList) {
         for (Integer i =0; i < sortingList.size(); i++) {
             for (Integer j = i; j > 0; j--) {
