@@ -51,6 +51,14 @@ In summary, you will need to:
 4. Select the query field. You will be matching records based on values in this field.
 5. Select Additional Fields to show in Output File. This tool will always return the record ID. Additional fields selected here will also be returned in your output file.
 6. Upload your query csv file and click "Run Query".
-   - If you experience an error that says you reached page size limits, this is happening because the size of the outputted csv is too large. Consider breaking your file up in to smaller batches of ~500 records or less, or reducing the number of fields either in your input file or that you are returning from matched records. 
+   - If you experience an error that says you reached page size limits, this is happening because the size of the outputted csv is too large. Visualforce pages are limited to 132kb. Consider breaking your file up in to smaller batches of ~500 records or less, or reducing the number of fields either in your input file or that you are returning from matched records. 
    - Likewise, if you experienced an Apex CPU Time Limit error, Salesforce is trying to match too many records. You will need to break your file up in to smaller batches of ~500 records or less.
 7. If everything worked, you should see a link that says "Click to Download Results". Your result file will include the columns from your original file alongside the Salesforce ID of the matched record(s) and the additional fields you selected. 
+
+## Known Limitations
+
+Some things to be aware of if you are thinking of using this tool instead of something fancier. 
+
+- Visualforce pages are limited to 132kb, meaning you can't use this tool for extremely large 
+- No "Scenarios" or reusable settings like Data Loader or DemandTools.
+- Can only look up records by one record, and can't do fuzzy lookups or operations. The single field limitation might be overcomeable by using formula fields in your input data and on the Salesforce records being queried.
