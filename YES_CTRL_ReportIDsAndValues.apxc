@@ -2,9 +2,9 @@
 // Offered to the nonprofit Salesforce community as open source software. Please make it better.
 // 
 // I have blatantly ripped off some code from these fine sources:
-// Importing & reading a CSV: 			https://sfdcsrini.blogspot.com/2014/09/data-import-from-csv-using-visualforce.html
-// Generating list of object fields: 	https://developer.salesforce.com/forums/?id=9060G0000005UGKQA2
-// Sorting a Select list by value: 		https://success.salesforce.com/apex/ideaView?id=08730000000BrX6AAK
+// Importing & reading a CSV:           https://sfdcsrini.blogspot.com/2014/09/data-import-from-csv-using-visualforce.html
+// Generating list of object fields:    https://developer.salesforce.com/forums/?id=9060G0000005UGKQA2
+// Sorting a Select list by value:      https://success.salesforce.com/apex/ideaView?id=08730000000BrX6AAK
 // 
 // 
 //
@@ -16,29 +16,29 @@ public class YES_CTRL_ReportIDsAndValues {
     public List<String> searchValues        {get;set;}
     
     // In version 1, will default to 0, first column of csv, for search values. In the future I hope to support selecting a different column as the search values.
-    public Integer searchTokenIndex			{get;set;}
+    public Integer searchTokenIndex         {get;set;}
     
     // These are for debugging and don't really play much a role
-    public string soqlQuery				{get;set;}
-    public string csvBeforeConvert			{get;set;}
+    public string soqlQuery                 {get;set;}
+    public string csvBeforeConvert          {get;set;}
     
     // These are the Salesforce field values that will be output to the returned csv
-    public List<string> fieldList			{get;set;}
+    public List<string> fieldList           {get;set;}
     
     // This holds the records that match our search values
-    public List<Sobject> opps				{get;set;}
+    public List<Sobject> opps               {get;set;}
     
     // Our output csv will be encoded here.
-    public String csv					{get;set;}
+    public String csv                       {get;set;}
     
     // User input of what objects and fields are being queries and returned
-    public String selectedObject			{get;set;}
-    public String selectedField				{get;set;}
-    public String[] fieldsInOutput			{get;set;}
+    public String selectedObject            {get;set;}
+    public String selectedField             {get;set;}
+    public String[] fieldsInOutput          {get;set;}
     
     // These handle the dynamic display and selection of objects and fields. 
-    public List<SelectOption> listOfObjects	        {get;set;}
-    public List<SelectOption> listOfFields	        {get;set;}
+    public List<SelectOption> listOfObjects     {get;set;}
+    public List<SelectOption> listOfFields      {get;set;}
     public Map<String, Schema.SobjectType> gd = schema.getGlobalDescribe();
     public Map<String, schema.SObjectField> MapOfFields;
     
@@ -68,6 +68,8 @@ public class YES_CTRL_ReportIDsAndValues {
         
         // Split to csv into rows
         csvAsString 	= csvFileBody.toString();
+        // Remove the \r character to ensure we have neat input data. Not doing this breaks single-column input csv's created in some programs (ie. Excel)
+        csvAsString		= csvAsString.replaceAll('\\r','') ;
         csvfilelines 	= csvAsString.split('\n');
         
         //get header row
@@ -78,7 +80,7 @@ public class YES_CTRL_ReportIDsAndValues {
         // get our search values
         for(Integer i=1;i<csvFileLines.size();i++){
             string[] csvRecordData = csvfilelines[i].split(',');
-            searchValues.add(csvRecordData[searchTokenIndex] );
+            searchValues.add( csvRecordData[searchTokenIndex] );
         }
         
         // generate the list of fields to search by and the soql query
@@ -162,6 +164,7 @@ public class YES_CTRL_ReportIDsAndValues {
             // if we didn't find a match for this record, then just output the original row
             if(matchFound == false){
                 csv = csv + csvfilelines[i].replaceAll('\\n','').replaceAll('\\r','') + ',';
+                csv = csv + 'No Match with ' + csvRecordData[searchTokenIndex];
                 if (fieldsInOutput.size() > 0){
                     for(Integer k = 0; k < fieldsInOutput.size(); k++){
                         csv = csv + ',';
