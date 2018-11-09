@@ -55,10 +55,11 @@ In summary, you will need to:
    - Likewise, if you experienced an Apex CPU Time Limit error, Salesforce is trying to match too many records. You will need to break your file up in to smaller batches of ~500 records or less.
 7. If everything worked, you should see a link that says "Click to Download Results". Your result file will include the columns from your original file alongside the Salesforce ID of the matched record(s) and the additional fields you selected. 
 
-## Known Limitations
+## Known Limitations (as of 11/9/2018)
 
 Some things to be aware of if you are thinking of using this tool instead of something fancier. 
 
-- Visualforce pages are limited to 132kb, meaning you can't use this tool for extremely large 
+- It doesn't work in Lighting.
+- Visualforce pages are limited to 132kb, meaning you can't use this tool for extremely large jobs.
 - No "Scenarios" or reusable settings like Data Loader or DemandTools.
-- Can only look up records by one record, and can't do fuzzy lookups or operations. The single field limitation might be overcomeable by using formula fields in your input data and on the Salesforce records being queried.
+- Can only look up records by one field value, and it can't do fuzzy lookups or operations. The single field limitation might be overcomeable by using formula fields in your input data and on the Salesforce records being queried.
