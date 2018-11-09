@@ -20,7 +20,7 @@ For example:
 
 ## How to install
 
-[Install the package directly into your sandbox org](https://test.salesforce.com/packaging/installPackage.apexp?p0=04t4D0000008xAv)
+[Click here to install the package directly into your sandbox org](https://test.salesforce.com/packaging/installPackage.apexp?p0=04t4D0000008xAv)
 
 After installation, you may want to add a custom tab and add it to your app to access the Visualforce page through normal navigation.
 
