@@ -19,24 +19,12 @@ For example:
 - And many more!
 
 ## How to install
-If you are familiar with how to create a Visualforce page with a custom controller, and deploy that to production, this should be easy. 
 
-If not... In a future version, I hope to include a package that will allow for easy deployment. In the meantime, you will need to install this code manually. If you've never done this, I recommend talking to someone who has done it before who might be able to walk you through the steps. 
+[Install the package directly into your sandbox org](https://test.salesforce.com/packaging/installPackage.apexp?p0=04t4D0000008xAv)
 
-In summary, you will need to:
+After installation, you may want to add a custom tab and add it to your app to access the Visualforce page through normal navigation.
 
-1. Log in to a sandbox instance and open developer console. 
-2. Create three new files:
-   - Visualforce Page: YES_ReportIDsAndValues
-   - Apex Class: YES_CTRL_ReportIDsAndValues
-   - Apex Class: YES_TEST_ReportIDsAndValues
-3. Copy/Paste the code from this repository into the appropriate new files. 
-4. Create an outbound change set and add these files to it.
-5. Upload that change set to your production instance. 
-6. In production, select this change set and deploy it. 
-7. When selecting the Apex tests to run, select "Run Specific Tests" and paste the name of our test class into the text box: YES_TEST_ReportIDsAndValues
-8. Wait for the tests to run. 
-9. In both Lightning and Classic, you will need to add a custom tab and add it to your app to access the Visualforce page through normal navigation.
+Note that it will not work properly in Lightning! You may need to switch to Classic. 
 
 ## How to use
 1. Prepare a .csv file with your input data.
