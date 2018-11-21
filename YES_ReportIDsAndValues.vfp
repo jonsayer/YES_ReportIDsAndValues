@@ -10,6 +10,9 @@
                 <p>
                     If your query matches multiple records, this tool will always return them on separate rows in your output spreadsheet.
                 </p>
+                <p>
+                    <b>Remember to switch to Salesforce Classic</b> if you have not already. This tool does not currently work in Lightning. 
+                </p>
             </apex:pageBlockSection>
             
             
