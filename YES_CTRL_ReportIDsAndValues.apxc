@@ -83,7 +83,14 @@ public class YES_CTRL_ReportIDsAndValues {
             searchValues.add( csvRecordData[searchTokenIndex] );
         }
         
-        // generate the list of fields to search by and the soql query
+        // If the user has opted to display the query field in the list of output fields, remove it from the list or else we will  have a SOQL error
+        for(Integer i = fieldsInOutput.size() - 1; i >= 0; i--){
+            if(fieldsInOutput[i] == selectedField){
+                fieldsInOutput.remove(i);
+            }
+        }
+        
+        // generate the list of fields to return for SOQL query
         String outputFieldsCombined = '';
         if (fieldsInOutput.size() > 0){
             if(fieldsInOutput.size() == 1){
