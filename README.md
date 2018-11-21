@@ -26,7 +26,7 @@ For example:
 
 After installation, you may want to add a custom tab and add it to your app to access the Visualforce page through normal navigation.
 
-Note that it will not work properly in Lightning! You may need to switch to Classic. 
+Note that it will not work properly in Lightning! You will need to switch to Classic. 
 
 ## How to use
 1. Prepare a .csv file with your input data.
